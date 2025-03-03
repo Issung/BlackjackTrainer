@@ -15,7 +15,10 @@ public class Shoe(int deckCount)
 
     public int TotalSize => deckCount * Deck.TotalCards;
 
-    public bool AlmostEmpty => decks.Sum(d => d.Count)
+    // TODO: Find out how the cut card actually works that triggers a shuffle.
+    public bool AlmostEmpty => ((float)decks.Sum(d => d.Count) / TotalSize) < almostEmptyThreshold;
+
+    private const float almostEmptyThreshold = 0.15f;
 
     public Card Draw()
     {

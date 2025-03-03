@@ -8,11 +8,11 @@ public class JRandom
 
     private static readonly object _lock = new();
 
-    public static int Next(int maxInclusive)
+    public static int Next(int maxExclusive)
     {
         lock (_lock)
         {
-            return Instance.Next(maxInclusive + 1);
+            return Instance.Next(maxExclusive);
         }
     }
 }

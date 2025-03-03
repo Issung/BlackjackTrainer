@@ -5,11 +5,19 @@ namespace Core;
 
 public class Hand
 {
-    public List<Card> Cards { get; } = [];
+    public IReadOnlyList<Card> Cards => cards;
 
-    public void Add(Card card) => Cards.Add(card);
+    private readonly List<Card> cards = [];
 
-    public bool CanSplit => Cards.Count == 2 && Cards[0].Equals(Cards[1]);
+    public void Add(Card card) => cards.Add(card);
+
+    public bool CanSplit => cards.Count == 2 && cards[0].Equals(cards[1]);
+
+    public Hand(Shoe shoe)
+    {
+        Add(shoe.Draw());
+        Add(shoe.Draw());
+    }
 
     /// <summary>
     /// Value (with Aces counting as 11).
@@ -18,7 +26,7 @@ public class Hand
     {
         get
         {
-            int sum = Cards.Sum(c => c.Rank switch
+            int sum = cards.Sum(c => c.Rank switch
             {
                 Rank.Ace => 1,
                 Rank.Two => 2,
@@ -33,7 +41,7 @@ public class Hand
                 _ => throw new System.Exception("Invalid rank")
             });
 
-            var aceCount = Cards.Count(c => c.Rank == Rank.Ace);
+            var aceCount = cards.Count(c => c.Rank == Rank.Ace);
 
             while (aceCount > 0 && sum + 10 <= 21)
             {

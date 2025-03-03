@@ -1,31 +1,41 @@
-﻿namespace BlackjackBasicStrategy;
+﻿using Core;
+
+namespace BlackjackBasicStrategy;
 
 enum Move { Hit, Stand, Double, Split, Surrender }
 
 class Program
 {
-    static Random random = new();
+    const int shoeDecks = 6;
 
     static void Main()
     {
+        var shoe = new Shoe(shoeDecks);
+
         while (true)
         {
-            PlayHand();
+            PlayHand(shoe);
+
+            if (shoe.AlmostEmpty)
+            {
+                Console.WriteLine("Shoe is almost empty. Restarting...");
+                shoe = new Shoe(shoeDecks);
+            }
         }
     }
 
-    static void PlayHand()
+    static void PlayHand(Shoe shoe)
     {
-        var playerHand = new List<int> { DrawCard(), DrawCard() };
-        var dealerHand = new List<int> { DrawCard(), DrawCard() };
-        var dealerUpCard = dealerHand[0];
+        var playerHand = new Hand(shoe);
+        var dealerHand = new Hand(shoe);
+        var dealerUpCard = dealerHand.Cards[0];
 
-        Console.WriteLine($"Dealer's upcard: {CardToString(dealerUpCard)}");
-        Console.WriteLine($"Your hand: {string.Join(", ", playerHand.Select(CardToString))} (Total: {HandValue(playerHand)})");
+        Console.WriteLine($"Dealer's upcard: {dealerUpCard}");
+        Console.WriteLine($"Your hand: {string.Join(", ", playerHand.Cards)} (Total: {playerHand.Value})");
 
         while (true)
         {
-            var correctMove = GetBasicStrategyMove(playerHand, dealerUpCard);
+            //var correctMove = GetBasicStrategyMove(playerHand, dealerUpCard);
             Console.Write("Enter your move (Hit/Stand/Double/Split/Surrender): ");
             var moveInput = Console.ReadLine()?.Trim().ToLower() ?? throw new Exception("moveInput unexpectedly null.");
             var move = Enum.Parse<Move>(moveInput, true);
@@ -36,18 +46,16 @@ class Program
 
                 if (move == Move.Hit || move == Move.Double)
                 {
-                    playerHand.Add(DrawCard());
+                    playerHand.Add(shoe.Draw());
 
-                    Console.WriteLine($"New hand: {string.Join(", ", playerHand.Select(CardToString))} (Total: {HandValue(playerHand)})");
+                    Console.WriteLine($"New hand: {string.Join(", ", playerHand.Cards)} (Total: {playerHand.Value})");
 
-                    var handValue = HandValue(playerHand);
-
-                    if (handValue == 21)
+                    if (playerHand.Value == 21)
                     {
                         Console.WriteLine("Blackjack! You win.");
                         return;
                     }
-                    else if (handValue > 21)
+                    else if (playerHand.Value > 21)
                     {
                         Console.WriteLine("Bust! You lose.");
                         return;
@@ -65,33 +73,33 @@ class Program
             }
             else
             {
-                Console.WriteLine($"Incorrect! The correct move was: {correctMove}. Restarting...");
+                //Console.WriteLine($"Incorrect! The correct move was: {correctMove}. Restarting...");
                 return;
             }
         }
 
         Console.WriteLine("Dealer's turn...");
-        while (HandValue(dealerHand) < 17)
+        while (dealerHand.Value < 17)
         {
-            var newCard = DrawCard();
+            var newCard = shoe.Draw();
             Console.WriteLine($"Dealer draws {newCard}.");
             dealerHand.Add(newCard);
         }
 
-        Console.WriteLine($"Dealer's final hand: {string.Join(", ", dealerHand.Select(CardToString))} (Total: {HandValue(dealerHand)})");
+        Console.WriteLine($"Dealer's final hand: {string.Join(", ", dealerHand.Cards)} (Total: {dealerHand.Value})");
         ResolveGame(playerHand, dealerHand);
+        Console.WriteLine("Press Enter to continue...");
+        Console.ReadLine();
+        Console.Clear();
     }
 
-    static void ResolveGame(List<int> playerHand, List<int> dealerHand)
+    static void ResolveGame(Hand player, Hand dealer)
     {
-        int playerTotal = HandValue(playerHand);
-        int dealerTotal = HandValue(dealerHand);
-
-        if (dealerTotal > 21 || playerTotal > dealerTotal)
+        if (dealer.Value > 21 || player.Value > dealer.Value)
         {
             Console.WriteLine("You win!");
         }
-        else if (playerTotal < dealerTotal)
+        else if (player.Value < dealer.Value)
         {
             Console.WriteLine("Dealer wins!");
         }
@@ -100,8 +108,6 @@ class Program
             Console.WriteLine("It's a tie!");
         }
     }
-
-    static int DrawCard() => random.Next(1, 11);
 
     static int HandValue(List<int> hand)
     {
@@ -115,9 +121,7 @@ class Program
         return sum;
     }
 
-    static string CardToString(int card) => card == 1 ? "A" : card.ToString();
-
-    static Move GetBasicStrategyMove(List<int> playerHand, int dealerUpCard)
+    /*static Move GetBasicStrategyMove(List<int> playerHand, int dealerUpCard)
     {
         int playerTotal = HandValue(playerHand);
         bool isSoft = playerHand.Contains(1) && playerTotal <= 21;
@@ -161,5 +165,5 @@ class Program
         if (playerTotal == 10) return dealerUpCard <= 9 ? Move.Double : Move.Hit;
         if (playerTotal == 9) return dealerUpCard is (3 or 4 or 5 or 6) ? Move.Double : Move.Hit;
         return Move.Hit;
-    }
+    }*/
 }
